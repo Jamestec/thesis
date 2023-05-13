@@ -1,2 +1,6 @@
 # Thesis
-This first commit should be a clean clone of NASA's cFS repository (https://github.com/nasa/cFS) around December 2022 when work on the Thesis first started. The purpose of this commit is so you can see the changes my Thesis made.
+This version is what was used for the final Thesis demo. The code has not been cleaned up and files not organised. The cleaned up version should be on the master branch.
+
+The purpose of this branch is for reference if my cleaned up version does not work.
+
+Note that references to bitstreams are absolute, therefore the bitstreams folder should be copied to '/home/ubuntu/bitstreams' on the ZedBoard's SD card to copy my environment.

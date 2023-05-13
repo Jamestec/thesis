@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcpu1_sch_lab_table_sch_lab_table.a CMakeFiles/cpu1_sch_lab_table_sch_lab_table.dir/fsw/tables/sch_lab_table.c.o
+/usr/bin/ranlib libcpu1_sch_lab_table_sch_lab_table.a

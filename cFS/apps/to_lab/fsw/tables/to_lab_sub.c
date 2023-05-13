@@ -37,6 +37,9 @@
 #include "ci_lab_msgids.h"
 
 #include "sample_app_msgids.h"
+#include "fir_app_msgids.h"
+#include "fir2_app_msgids.h"
+#include "speedtest_app_msgids.h"
 
 #if 0
 #include "hs_msgids.h"
@@ -51,6 +54,9 @@ TO_LAB_Subs_t TO_LAB_Subs = {.Subs = {/* CFS App Subscriptions */
                                       {CFE_SB_MSGID_WRAP_VALUE(TO_LAB_DATA_TYPES_MID), {0, 0}, 4},
                                       {CFE_SB_MSGID_WRAP_VALUE(CI_LAB_HK_TLM_MID), {0, 0}, 4},
                                       {CFE_SB_MSGID_WRAP_VALUE(SAMPLE_APP_HK_TLM_MID), {0, 0}, 4},
+                                      {CFE_SB_MSGID_WRAP_VALUE(FIR_APP_HK_TLM_MID), {0, 0}, 1},
+                                      {CFE_SB_MSGID_WRAP_VALUE(FIR2_APP_HK_TLM_MID), {0, 0}, 1},
+                                      {CFE_SB_MSGID_WRAP_VALUE(SPEEDTEST_APP_HK_TLM_MID), {0, 0}, 1},
 
 #if 0
         /* Add these if needed */

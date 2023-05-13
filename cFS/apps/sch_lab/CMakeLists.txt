@@ -6,6 +6,9 @@ include_directories(fsw/platform_inc)
 include_directories(${ci_lab_MISSION_DIR}/fsw/platform_inc)
 include_directories(${to_lab_MISSION_DIR}/fsw/platform_inc)
 include_directories(${sample_app_MISSION_DIR}/fsw/platform_inc)
+include_directories(${fir_app_MISSION_DIR}/fsw/platform_inc)
+include_directories(${fir2_app_MISSION_DIR}/fsw/platform_inc)
+include_directories(${speedtest_app_MISSION_DIR}/fsw/platform_inc)
 
 # Create the app module
 add_cfe_app(sch_lab fsw/src/sch_lab_app.c)

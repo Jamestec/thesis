@@ -148,6 +148,7 @@ uint32 CFE_ES_GetPerfLogDumpRemaining(void)
  *-----------------------------------------------------------------*/
 int32 CFE_ES_StartPerfDataCmd(const CFE_ES_StartPerfDataCmd_t *data)
 {
+	CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: lower=%d, upper=%d\n", CFE_ES_PERF_TRIGGER_START, CFE_ES_PERF_MAX_MODES);
     const CFE_ES_StartPerfCmd_Payload_t *CmdPtr        = &data->Payload;
     CFE_ES_PerfDumpGlobal_t *            PerfDumpState = &CFE_ES_Global.BackgroundPerfDumpState;
     CFE_ES_PerfData_t *                  Perf;
@@ -158,11 +159,13 @@ int32 CFE_ES_StartPerfDataCmd(const CFE_ES_StartPerfDataCmd_t *data)
     Perf = &CFE_ES_Global.ResetDataPtr->Perf;
 
     /* Ensure there is no file write in progress before proceeding */
+	CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: before if\n");
     if (PerfDumpState->CurrentState == CFE_ES_PerfDumpState_IDLE &&
         PerfDumpState->PendingState == CFE_ES_PerfDumpState_IDLE)
     {
         /* Make sure Trigger Mode is valid */
         /* cppcheck-suppress unsignedPositive */
+		CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: before trigger check\n");
         if ((CmdPtr->TriggerMode >= CFE_ES_PERF_TRIGGER_START) && (CmdPtr->TriggerMode < CFE_ES_PERF_MAX_MODES))
         {
 
@@ -180,6 +183,7 @@ int32 CFE_ES_StartPerfDataCmd(const CFE_ES_StartPerfDataCmd_t *data)
             Perf->MetaData.State                 = CFE_ES_PERF_WAITING_FOR_TRIGGER; /* this must be done last */
             OS_MutSemGive(CFE_ES_Global.PerfDataMutex);
 
+			CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: Started\n");
             CFE_EVS_SendEvent(CFE_ES_PERF_STARTCMD_EID, CFE_EVS_EventType_DEBUG,
                               "Start collecting performance data cmd received, trigger mode = %d",
                               (int)CmdPtr->TriggerMode);
@@ -187,6 +191,7 @@ int32 CFE_ES_StartPerfDataCmd(const CFE_ES_StartPerfDataCmd_t *data)
         else
         {
             CFE_ES_Global.TaskData.CommandErrorCounter++;
+			CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: trigger out of range\n");
             CFE_EVS_SendEvent(CFE_ES_PERF_STARTCMD_TRIG_ERR_EID, CFE_EVS_EventType_ERROR,
                               "Cannot start collecting performance data, trigger mode (%d) out of range (%d to %d)",
                               (int)CmdPtr->TriggerMode, (int)CFE_ES_PERF_TRIGGER_START, (int)CFE_ES_PERF_TRIGGER_END);
@@ -195,10 +200,12 @@ int32 CFE_ES_StartPerfDataCmd(const CFE_ES_StartPerfDataCmd_t *data)
     else
     {
         CFE_ES_Global.TaskData.CommandErrorCounter++;
+		CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: writing atm\n");
         CFE_EVS_SendEvent(CFE_ES_PERF_STARTCMD_ERR_EID, CFE_EVS_EventType_ERROR,
                           "Cannot start collecting performance data,perf data write in progress");
     } /* end if */
 
+	CFE_ES_WriteToSysLog("CFE_ES_StartPerfDataCmd: before return\n");
     return CFE_SUCCESS;
 }
 

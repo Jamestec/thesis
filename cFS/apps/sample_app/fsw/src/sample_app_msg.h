@@ -28,9 +28,18 @@
 /*
 ** SAMPLE App command codes
 */
-#define SAMPLE_APP_NOOP_CC           0
-#define SAMPLE_APP_RESET_COUNTERS_CC 1
-#define SAMPLE_APP_PROCESS_CC        2
+#define PL_CONTROL_APP_NOOP_CC           0
+#define PL_CONTROL_APP_RESET_COUNTERS_CC 1
+#define PL_CONTROL_APP_PROCESS_CC        2
+#define PL_CONTROL_APP_FULL_PROGRAM_CC        3
+#define PL_CONTROL_APP_PARTIAL_PROGRAM_CC        4
+#define PL_CONTROL_APP_RESET_CC        5
+#define PL_CONTROL_APP_INPUT_CC        6
+#define PL_CONTROL_APP_OUTPUT_CC        7
+#define PL_CONTROL_APP_RELEASE_CC        8
+#define PL_CONTROL_APP_QUERY_CC        9
+#define PL_CONTROL_APP_COUNTER_TEST_CC        10
+#define PL_CONTROL_APP_MAKE_BUSY_CC        11
 
 /*************************************************************************/
 
@@ -52,6 +61,7 @@ typedef struct
 typedef SAMPLE_APP_NoArgsCmd_t SAMPLE_APP_NoopCmd_t;
 typedef SAMPLE_APP_NoArgsCmd_t SAMPLE_APP_ResetCountersCmd_t;
 typedef SAMPLE_APP_NoArgsCmd_t SAMPLE_APP_ProcessCmd_t;
+typedef SAMPLE_APP_NoArgsCmd_t SAMPLE_APP_Output_t;
 
 /*************************************************************************/
 /*
@@ -62,7 +72,14 @@ typedef struct
 {
     uint8 CommandErrorCounter;
     uint8 CommandCounter;
-    uint8 spare[2];
+    char binfile[128];
+	cpuaddr base_addr;
+	int32 input_offset;
+	int32 start_offset;
+	int32 done_offset;
+	int32 output_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
 } SAMPLE_APP_HkTlm_Payload_t;
 
 typedef struct
@@ -70,5 +87,107 @@ typedef struct
     CFE_MSG_TelemetryHeader_t  TelemetryHeader; /**< \brief Telemetry header */
     SAMPLE_APP_HkTlm_Payload_t Payload;         /**< \brief Telemetry payload */
 } SAMPLE_APP_HkTlm_t;
+
+/*************************************************************************/
+/*
+** Type definition (SAMPLE App Program PL)
+*/
+
+typedef struct
+{
+    char binfile[128];
+	cpuaddr base_addr;
+	int32 input_offset;
+	int32 start_offset;
+	int32 done_offset;
+	int32 output_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
+} SAMPLE_APP_BinFile_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_BinFile_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_BinFile_t;
+
+typedef struct
+{
+	cpuaddr base_addr;
+	int32 reset_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
+} SAMPLE_APP_Reset_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Reset_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Reset_t;
+
+typedef struct
+{
+    int32 number;
+	cpuaddr base_addr;
+	int32 input_offset;
+	int32 start_offset;
+	int32 done_offset;
+	int32 output_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
+} SAMPLE_APP_Input_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Input_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Input_t;
+
+typedef struct
+{
+    int32 Done;
+	int32 Output;
+} SAMPLE_APP_Output_Pkt_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Output_Pkt_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Output_Pkt_t;
+
+typedef struct
+{
+	int32 reply_msgid;
+	int32 reply_cmdid;
+} SAMPLE_APP_Release_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Release_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Release_t;
+
+typedef struct
+{
+	int32 reply_msgid;
+	int32 reply_cmdid;
+} SAMPLE_APP_Query_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Query_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Query_t;
+
+typedef struct
+{
+	int32 Reply;
+} SAMPLE_APP_Reply_Payload_t;
+
+typedef struct
+{
+    CFE_MSG_CommandHeader_t       CmdHeader; /**< \brief Command header */
+    SAMPLE_APP_Reply_Payload_t Payload;   /**< \brief Command payload */
+} SAMPLE_APP_Reply_t;
 
 #endif /* SAMPLE_APP_MSG_H */

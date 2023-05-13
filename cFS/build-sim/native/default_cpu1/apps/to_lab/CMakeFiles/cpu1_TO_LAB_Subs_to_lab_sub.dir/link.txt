@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcpu1_TO_LAB_Subs_to_lab_sub.a CMakeFiles/cpu1_TO_LAB_Subs_to_lab_sub.dir/fsw/tables/to_lab_sub.c.o
+/usr/bin/ranlib libcpu1_TO_LAB_Subs_to_lab_sub.a

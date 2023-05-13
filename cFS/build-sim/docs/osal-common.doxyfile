@@ -1,0 +1,49 @@
+#---------------------------------------------------------------------------
+# OSAL common setup for including in stand alone or mission documentation
+#---------------------------------------------------------------------------
+
+# Allow overrides
+@INCLUDE_PATH          = /home/jam/Downloads/cFS
+
+# Default settings
+@INCLUDE               = /home/jam/Downloads/cFS/osal/docs/src/default-settings.doxyfile
+
+# Include any passed in predefines
+PREDEFINED            += 
+
+# Minimum set of source files (includes *.dox, followed by public headers)
+INPUT                 +=  \
+  /home/jam/Downloads/cFS/osal/docs/src/osal_frontpage.dox \
+  /home/jam/Downloads/cFS/osal/docs/src/osal_fs.dox \
+  /home/jam/Downloads/cFS/osal/docs/src/osal_timer.dox \
+  /home/jam/Downloads/cFS/osal/src/os/inc/common_types.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-binsem.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-bsp.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-clock.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-common.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-constants.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-countsem.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-dir.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-error.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-file.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-filesys.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-heap.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-idmap.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-macros.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-module.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-mutex.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-network.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-printf.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-queue.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-select.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-shell.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-sockets.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-task.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-timebase.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-timer.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi-version.h \
+  /home/jam/Downloads/cFS/osal/src/os/inc/osapi.h \
+  /home/jam/Downloads/cFS/build-sim/docs/osconfig-example.h
+
+# Strip source dir from path
+STRIP_FROM_PATH       += /home/jam/Downloads/cFS

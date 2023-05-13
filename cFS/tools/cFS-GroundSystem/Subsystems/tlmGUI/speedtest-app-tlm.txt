@@ -1,0 +1,5 @@
+#
+CommandErrorCounter,        12,  1,  B, Dec, NULL,        NULL,        NULL,       NULL
+CommandCounter,    13,  1,  B, Dec, NULL,        NULL,        NULL,       NULL  
+Inputs,      14,  200,  s, Str, NULL,        NULL,        NULL,       NULL  
+Outputs,    214,  200,  s, Str, NULL,        NULL,        NULL,       NULL

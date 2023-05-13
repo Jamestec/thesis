@@ -41,6 +41,10 @@
 /***********************************************************************/
 #define SAMPLE_APP_PIPE_DEPTH 32 /* Depth of the Command Pipe for Application */
 
+#define SAMPLE_APP_PL_QUEUE_LEN 4
+
+#define SAMPLE_APP_INPUT_BUFFER 16
+
 #define SAMPLE_APP_NUMBER_OF_TABLES 1 /* Number of Table(s) */
 
 /* Define filenames of default data images for tables */
@@ -58,11 +62,49 @@
 */
 typedef struct
 {
+	char binfile[128];
+	cpuaddr base_addr;
+	int32 input_offset;
+	int32 start_offset;
+	int32 done_offset;
+	int32 output_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
+	int32 input_queued;
+	int32 inputs[SAMPLE_APP_INPUT_BUFFER];
+} SAMPLE_APP_PL_DETAILS_t;
+
+typedef struct
+{
     /*
     ** Command interface counters...
     */
     uint8 CmdCounter;
     uint8 ErrCounter;
+	
+	// PL information
+	//SAMPLE_APP_PL_DETAILS_t PL_Details[SAMPLE_APP_PL_QUEUE_LEN];
+	char binfile[128];
+	cpuaddr base_addr;
+	int32 input_offset;
+	int32 start_offset;
+	int32 done_offset;
+	int32 output_offset;
+	int32 reply_msgid;
+	int32 reply_cmdid;
+
+	// PL Output packet
+	SAMPLE_APP_Output_Pkt_t Output_Pkt;
+	
+	// Reply packet
+	SAMPLE_APP_Reply_t Reply_Pkt;
+	
+	// Counter test *start
+	int *g_start;
+	cpusize newSize;
+	
+	// Make Busy paket
+	SAMPLE_APP_Output_Pkt_t Busy_Pkt;
 
     /*
     ** Housekeeping telemetry packet...
@@ -104,6 +146,16 @@ int32 SAMPLE_APP_ReportHousekeeping(const CFE_MSG_CommandHeader_t *Msg);
 int32 SAMPLE_APP_ResetCounters(const SAMPLE_APP_ResetCountersCmd_t *Msg);
 int32 SAMPLE_APP_Process(const SAMPLE_APP_ProcessCmd_t *Msg);
 int32 SAMPLE_APP_Noop(const SAMPLE_APP_NoopCmd_t *Msg);
+int32 SAMPLE_APP_Full_Program (SAMPLE_APP_BinFile_t *Msg);
+int32 SAMPLE_APP_Partial_Program (SAMPLE_APP_BinFile_t *Msg);
+int32 SAMPLE_APP_Reset (SAMPLE_APP_Reset_t *Msg);
+int32 SAMPLE_APP_Input (SAMPLE_APP_Input_t *Msg);
+int32 SAMPLE_APP_Output (SAMPLE_APP_Output_t *Msg);
+int32 SAMPLE_APP_Release (SAMPLE_APP_Release_t *Msg);
+int32 SAMPLE_APP_Query (SAMPLE_APP_Query_t *Msg);
+int32 SAMPLE_APP_Counter_Test (SAMPLE_APP_Output_Pkt_t *Msg);
+int32 Counter_Test_Output (void);
+int32 SAMPLE_APP_Make_Busy (SAMPLE_APP_Output_Pkt_t *Msg);
 void  SAMPLE_APP_GetCrc(const char *TableName);
 
 int32 SAMPLE_APP_TblValidationFunc(void *TblData);
