@@ -1,0 +1,23 @@
+#---------------------------------------------------------------------------
+# Doxygen Configuration options to generate the "cFE Users Guide"
+#---------------------------------------------------------------------------
+
+# Allow overrides
+@INCLUDE_PATH          = /home/jam/Downloads/cFS
+
+# Common setup
+@INCLUDE               = /home/jam/Downloads/cFS/build-sim/docs/cfe-common.doxyfile
+
+# Include osal to resolve references and provide default settings
+@INCLUDE               = /home/jam/Downloads/cFS/build-sim/docs/osal-common.doxyfile
+
+# Document specific settings
+PROJECT_NAME           = "Core Flight Executive Users Guide"
+OUTPUT_DIRECTORY       = /home/jam/Downloads/cFS/build-sim/docs/cfe-usersguide
+WARN_LOGFILE           = cfe-usersguide-warnings.log
+
+# For purposes of the user guide, reference the "stock" mission configuration
+# Although missions may override these files, for the users guide we are mainly
+# interested in the documentation of those items.
+STRIP_FROM_PATH       += /home/jam/Downloads/cFS/cfe/cmake/sample_defs
+INPUT                 += /home/jam/Downloads/cFS/cfe/cmake/sample_defs

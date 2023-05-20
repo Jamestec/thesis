@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtbl.a CMakeFiles/tbl.dir/fsw/src/cfe_tbl_api.c.o CMakeFiles/tbl.dir/fsw/src/cfe_tbl_internal.c.o CMakeFiles/tbl.dir/fsw/src/cfe_tbl_task.c.o CMakeFiles/tbl.dir/fsw/src/cfe_tbl_task_cmds.c.o
+/usr/bin/ranlib libtbl.a

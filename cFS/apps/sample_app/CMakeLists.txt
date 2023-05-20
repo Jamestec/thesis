@@ -8,7 +8,7 @@ add_cfe_app(sample_app fsw/src/sample_app.c)
 
 # Include the public API from sample_lib to demonstrate how
 # to call library-provided functions
-add_cfe_app_dependency(sample_app sample_lib)
+add_cfe_app_dependency(sample_app sample_lib fpgam_lib mmio_lib)
 
 # Add table
 add_cfe_tables(sampleAppTable fsw/tables/sample_app_tbl.c)

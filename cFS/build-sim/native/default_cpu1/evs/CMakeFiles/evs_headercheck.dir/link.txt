@@ -1,0 +1,2 @@
+/usr/bin/ar qc libevs_headercheck.a CMakeFiles/evs_headercheck.dir/src/check_cfe_evs_msg.h.c.o CMakeFiles/evs_headercheck.dir/src/check_cfe_evs_events.h.c.o
+/usr/bin/ranlib libevs_headercheck.a

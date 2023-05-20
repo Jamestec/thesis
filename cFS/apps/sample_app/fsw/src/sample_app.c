@@ -33,15 +33,18 @@
 #include <string.h>
 #include "sample_lib.h"
 
+#include "fpgam_lib.h"
+#include "mmio_lib.h"
+
 /*
 ** global data
 */
 SAMPLE_APP_Data_t SAMPLE_APP_Data;
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  * *  * * * * **/
-/* SAMPLE_APP_Main() -- Application entry point and main process loop         */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  * *  * * * * **/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* SAMPLE_APP_Main() -- Application entry point and main process loop      */
+/*                                                                         */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void SAMPLE_APP_Main(void)
 {
     int32            status;
@@ -88,7 +91,7 @@ void SAMPLE_APP_Main(void)
         else
         {
             CFE_EVS_SendEvent(SAMPLE_APP_PIPE_ERR_EID, CFE_EVS_EventType_ERROR,
-                              "SAMPLE APP: SB Pipe Read Error, App Will Exit");
+                              "PL_CONTROL APP: SB Pipe Read Error, App Will Exit");
 
             SAMPLE_APP_Data.RunStatus = CFE_ES_RunStatus_APP_ERROR;
         }
@@ -103,11 +106,11 @@ void SAMPLE_APP_Main(void)
 
 } /* End of SAMPLE_APP_Main() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  */
-/*                                                                            */
-/* SAMPLE_APP_Init() --  initialization                                       */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                           */
+/* SAMPLE_APP_Init() --  initialization                                      */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_APP_Init(void)
 {
     int32 status;
@@ -119,6 +122,16 @@ int32 SAMPLE_APP_Init(void)
     */
     SAMPLE_APP_Data.CmdCounter = 0;
     SAMPLE_APP_Data.ErrCounter = 0;
+    
+    // Init PL Info
+    SAMPLE_APP_Data.binfile[0] = '\0';
+    SAMPLE_APP_Data.base_addr = 0;
+    SAMPLE_APP_Data.input_offset = -1;
+    SAMPLE_APP_Data.start_offset = -1;
+    SAMPLE_APP_Data.done_offset = -1;
+    SAMPLE_APP_Data.output_offset = -1;
+    SAMPLE_APP_Data.reply_msgid = -1;
+    SAMPLE_APP_Data.reply_cmdid = -1;
 
     /*
     ** Initialize app configuration data
@@ -134,7 +147,7 @@ int32 SAMPLE_APP_Init(void)
     status = CFE_EVS_Register(NULL, 0, CFE_EVS_EventFilter_BINARY);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Registering Events, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Error Registering Events, RC = 0x%08lX\n", (unsigned long)status);
         return (status);
     }
 
@@ -150,7 +163,7 @@ int32 SAMPLE_APP_Init(void)
     status = CFE_SB_CreatePipe(&SAMPLE_APP_Data.CommandPipe, SAMPLE_APP_Data.PipeDepth, SAMPLE_APP_Data.PipeName);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error creating pipe, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Error creating pipe, RC = 0x%08lX\n", (unsigned long)status);
         return (status);
     }
 
@@ -160,7 +173,7 @@ int32 SAMPLE_APP_Init(void)
     status = CFE_SB_Subscribe(CFE_SB_ValueToMsgId(SAMPLE_APP_SEND_HK_MID), SAMPLE_APP_Data.CommandPipe);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Subscribing to HK request, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Error Subscribing to HK request, RC = 0x%08lX\n", (unsigned long)status);
         return (status);
     }
 
@@ -170,7 +183,7 @@ int32 SAMPLE_APP_Init(void)
     status = CFE_SB_Subscribe(CFE_SB_ValueToMsgId(SAMPLE_APP_CMD_MID), SAMPLE_APP_Data.CommandPipe);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Subscribing to Command, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Error Subscribing to Command, RC = 0x%08lX\n", (unsigned long)status);
 
         return (status);
     }
@@ -182,7 +195,7 @@ int32 SAMPLE_APP_Init(void)
                               CFE_TBL_OPT_DEFAULT, SAMPLE_APP_TblValidationFunc);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Registering Table, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Error Registering Table, RC = 0x%08lX\n", (unsigned long)status);
 
         return (status);
     }
@@ -191,7 +204,7 @@ int32 SAMPLE_APP_Init(void)
         status = CFE_TBL_Load(SAMPLE_APP_Data.TblHandles[0], CFE_TBL_SRC_FILE, SAMPLE_APP_TABLE_FILE);
     }
 
-    CFE_EVS_SendEvent(SAMPLE_APP_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "SAMPLE App Initialized.%s",
+    CFE_EVS_SendEvent(SAMPLE_APP_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "PL_CONTROL App Initialized.%s",
                       SAMPLE_APP_VERSION_STRING);
 
     return (CFE_SUCCESS);
@@ -205,7 +218,7 @@ int32 SAMPLE_APP_Init(void)
 /*     This routine will process any packet that is received on the SAMPLE    */
 /*     command pipe.                                                          */
 /*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void SAMPLE_APP_ProcessCommandPacket(CFE_SB_Buffer_t *SBBufPtr)
 {
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
@@ -224,7 +237,7 @@ void SAMPLE_APP_ProcessCommandPacket(CFE_SB_Buffer_t *SBBufPtr)
 
         default:
             CFE_EVS_SendEvent(SAMPLE_APP_INVALID_MSGID_ERR_EID, CFE_EVS_EventType_ERROR,
-                              "SAMPLE: invalid command packet,MID = 0x%x", (unsigned int)CFE_SB_MsgIdToValue(MsgId));
+                              "PL_CONTROL: invalid command packet,MID = 0x%x", (unsigned int)CFE_SB_MsgIdToValue(MsgId));
             break;
     }
 
@@ -232,11 +245,11 @@ void SAMPLE_APP_ProcessCommandPacket(CFE_SB_Buffer_t *SBBufPtr)
 
 } /* End SAMPLE_APP_ProcessCommandPacket */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* SAMPLE_APP_ProcessGroundCommand() -- SAMPLE ground commands                */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                           */
+/* SAMPLE_APP_ProcessGroundCommand() -- SAMPLE ground commands               */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void SAMPLE_APP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr)
 {
     CFE_MSG_FcnCode_t CommandCode = 0;
@@ -248,34 +261,96 @@ void SAMPLE_APP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr)
     */
     switch (CommandCode)
     {
-        case SAMPLE_APP_NOOP_CC:
+        case PL_CONTROL_APP_NOOP_CC:
             if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_NoopCmd_t)))
             {
                 SAMPLE_APP_Noop((SAMPLE_APP_NoopCmd_t *)SBBufPtr);
             }
-
             break;
 
-        case SAMPLE_APP_RESET_COUNTERS_CC:
+        case PL_CONTROL_APP_RESET_COUNTERS_CC:
             if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_ResetCountersCmd_t)))
             {
                 SAMPLE_APP_ResetCounters((SAMPLE_APP_ResetCountersCmd_t *)SBBufPtr);
             }
-
             break;
 
-        case SAMPLE_APP_PROCESS_CC:
+        case PL_CONTROL_APP_PROCESS_CC:
             if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_ProcessCmd_t)))
             {
                 SAMPLE_APP_Process((SAMPLE_APP_ProcessCmd_t *)SBBufPtr);
             }
+            break;
+
+        case PL_CONTROL_APP_FULL_PROGRAM_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_BinFile_t)))
+            {
+                SAMPLE_APP_Full_Program((SAMPLE_APP_BinFile_t *)SBBufPtr);
+            }
 
             break;
+
+        case PL_CONTROL_APP_PARTIAL_PROGRAM_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_BinFile_t)))
+            {
+                SAMPLE_APP_Partial_Program((SAMPLE_APP_BinFile_t *)SBBufPtr);
+            }
+            break;
+        
+        case PL_CONTROL_APP_RESET_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Reset_t)))
+            {
+                SAMPLE_APP_Reset((SAMPLE_APP_Reset_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_INPUT_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Input_t)))
+            {
+                SAMPLE_APP_Input((SAMPLE_APP_Input_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_OUTPUT_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Output_t)))
+            {
+                SAMPLE_APP_Output((SAMPLE_APP_Output_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_RELEASE_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Release_t)))
+            {
+                SAMPLE_APP_Release((SAMPLE_APP_Release_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_QUERY_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Query_t)))
+            {
+                SAMPLE_APP_Query((SAMPLE_APP_Query_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_COUNTER_TEST_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Output_Pkt_t)))
+            {
+                SAMPLE_APP_Counter_Test((SAMPLE_APP_Output_Pkt_t *)SBBufPtr);
+            }
+            break;
+
+        case PL_CONTROL_APP_MAKE_BUSY_CC:
+            if (SAMPLE_APP_VerifyCmdLength(&SBBufPtr->Msg, sizeof(SAMPLE_APP_Output_Pkt_t)))
+            {
+                SAMPLE_APP_Make_Busy((SAMPLE_APP_Output_Pkt_t *)SBBufPtr);
+            }
+            break;
+
 
         /* default case already found during FC vs length test */
         default:
             CFE_EVS_SendEvent(SAMPLE_APP_COMMAND_ERR_EID, CFE_EVS_EventType_ERROR,
-                              "Invalid ground command code: CC = %d", CommandCode);
+                              "PL_CONTROL: Invalid ground command code: CC = %d", CommandCode);
             break;
     }
 
@@ -283,15 +358,15 @@ void SAMPLE_APP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr)
 
 } /* End of SAMPLE_APP_ProcessGroundCommand() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  SAMPLE_APP_ReportHousekeeping                                          */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*         This function is triggered in response to a task telemetry request */
-/*         from the housekeeping task. This function will gather the Apps     */
-/*         telemetry, packetize it and send it to the housekeeping task via   */
-/*         the software bus                                                   */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_ReportHousekeeping                                       */
+/*                                                                             */
+/*  Purpose:                                                                   */
+/*         This function is triggered in response to a task telemetry request  */
+/*         from the housekeeping task. This function will gather the Apps      */
+/*         telemetry, packetize it and send it to the housekeeping task via    */
+/*         the software bus                                                    */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_APP_ReportHousekeeping(const CFE_MSG_CommandHeader_t *Msg)
 {
     int i;
@@ -301,6 +376,19 @@ int32 SAMPLE_APP_ReportHousekeeping(const CFE_MSG_CommandHeader_t *Msg)
     */
     SAMPLE_APP_Data.HkTlm.Payload.CommandErrorCounter = SAMPLE_APP_Data.ErrCounter;
     SAMPLE_APP_Data.HkTlm.Payload.CommandCounter      = SAMPLE_APP_Data.CmdCounter;
+    
+    // Add PL info
+    for (int i = 0; i < 128; i++) {
+        SAMPLE_APP_Data.HkTlm.Payload.binfile[i] = '\0';
+    }
+    strcpy(SAMPLE_APP_Data.HkTlm.Payload.binfile, SAMPLE_APP_Data.binfile);
+    SAMPLE_APP_Data.HkTlm.Payload.base_addr = SAMPLE_APP_Data.base_addr;
+    SAMPLE_APP_Data.HkTlm.Payload.input_offset = SAMPLE_APP_Data.input_offset;
+    SAMPLE_APP_Data.HkTlm.Payload.start_offset = SAMPLE_APP_Data.start_offset;
+    SAMPLE_APP_Data.HkTlm.Payload.done_offset = SAMPLE_APP_Data.done_offset;
+    SAMPLE_APP_Data.HkTlm.Payload.output_offset = SAMPLE_APP_Data.output_offset;
+    SAMPLE_APP_Data.HkTlm.Payload.reply_msgid = SAMPLE_APP_Data.reply_msgid;
+    SAMPLE_APP_Data.HkTlm.Payload.reply_cmdid = SAMPLE_APP_Data.reply_cmdid;
 
     /*
     ** Send housekeeping telemetry packet...
@@ -320,31 +408,31 @@ int32 SAMPLE_APP_ReportHousekeeping(const CFE_MSG_CommandHeader_t *Msg)
 
 } /* End of SAMPLE_APP_ReportHousekeeping() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* SAMPLE_APP_Noop -- SAMPLE NOOP commands                                        */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                           */
+/* SAMPLE_APP_Noop -- SAMPLE NOOP commands                                   */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_APP_Noop(const SAMPLE_APP_NoopCmd_t *Msg)
 {
 
     SAMPLE_APP_Data.CmdCounter++;
 
-    CFE_EVS_SendEvent(SAMPLE_APP_COMMANDNOP_INF_EID, CFE_EVS_EventType_INFORMATION, "SAMPLE: NOOP command %s",
-                      SAMPLE_APP_VERSION);
+    CFE_EVS_SendEvent(SAMPLE_APP_COMMANDNOP_INF_EID, CFE_EVS_EventType_INFORMATION, "SAMPLE: NOOP command %s, %d",
+                      SAMPLE_APP_VERSION, SAMPLE_APP_Data.CmdCounter);
 
     return CFE_SUCCESS;
 
 } /* End of SAMPLE_APP_Noop */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  SAMPLE_APP_ResetCounters                                               */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*         This function resets all the global counter variables that are     */
-/*         part of the task telemetry.                                        */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_ResetCounters                                          */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         This function resets all the global counter variables that are    */
+/*         part of the task telemetry.                                       */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_APP_ResetCounters(const SAMPLE_APP_ResetCountersCmd_t *Msg)
 {
 
@@ -357,13 +445,13 @@ int32 SAMPLE_APP_ResetCounters(const SAMPLE_APP_ResetCountersCmd_t *Msg)
 
 } /* End of SAMPLE_APP_ResetCounters() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  SAMPLE_APP_Process                                                     */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*         This function Process Ground Station Command                       */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_Process                                                */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         This function Process Ground Station Command                      */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_APP_Process(const SAMPLE_APP_ProcessCmd_t *Msg)
 {
     int32               status;
@@ -376,18 +464,18 @@ int32 SAMPLE_APP_Process(const SAMPLE_APP_ProcessCmd_t *Msg)
 
     if (status < CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Fail to get table address: 0x%08lx", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Fail to get table address: 0x%08lx", (unsigned long)status);
         return status;
     }
 
-    CFE_ES_WriteToSysLog("Sample App: Table Value 1: %d  Value 2: %d", TblPtr->Int1, TblPtr->Int2);
+    CFE_ES_WriteToSysLog("PL_Control App: Table Value 1: %d  Value 2: %d", TblPtr->Int1, TblPtr->Int2);
 
     SAMPLE_APP_GetCrc(TableName);
 
     status = CFE_TBL_ReleaseAddress(SAMPLE_APP_Data.TblHandles[0]);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Fail to release table address: 0x%08lx", (unsigned long)status);
+        CFE_ES_WriteToSysLog("PL_Control App: Fail to release table address: 0x%08lx", (unsigned long)status);
         return status;
     }
 
@@ -398,11 +486,373 @@ int32 SAMPLE_APP_Process(const SAMPLE_APP_ProcessCmd_t *Msg)
 
 } /* End of SAMPLE_APP_ProcessCC */
 
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_FULL_PROGRAM                                           */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Full program the PL                                               */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Full_Program (SAMPLE_APP_BinFile_t *Msg)
+{
+
+    SAMPLE_APP_BinFile_Payload_t *Payload = &(Msg->Payload);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "PL_CONTROL: PL is in use by %d", SAMPLE_APP_Data.reply_msgid);
+        // Init reply packet
+        CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), CFE_SB_ValueToMsgId(Payload->reply_msgid),
+                     sizeof(SAMPLE_APP_Data.Reply_Pkt));
+        CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), Payload->reply_cmdid);
+        SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 0;
+        CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), true);
+        return CFE_SUCCESS;
+    }
+    
+    strcpy(SAMPLE_APP_Data.binfile, Payload->binfile);
+    SAMPLE_APP_Data.base_addr = Payload->base_addr;
+    SAMPLE_APP_Data.input_offset = Payload->input_offset;
+    SAMPLE_APP_Data.start_offset = Payload->start_offset;
+    SAMPLE_APP_Data.done_offset = Payload->done_offset;
+    SAMPLE_APP_Data.output_offset = Payload->output_offset;
+    SAMPLE_APP_Data.output_offset = Payload->output_offset;
+    SAMPLE_APP_Data.reply_msgid = Payload->reply_msgid;
+    SAMPLE_APP_Data.reply_cmdid = Payload->reply_cmdid;
+    CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: Programming full bitstream %s", SAMPLE_APP_Data.binfile);
+    program_pl(Payload->binfile, 0);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_FULL_PROGRAM_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_PARTIAL_PROGRAM                                        */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Partially program the PL                                          */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Partial_Program (SAMPLE_APP_BinFile_t *Msg)
+{
+
+    SAMPLE_APP_BinFile_Payload_t *Payload = &(Msg->Payload);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "PL_CONTROL: PL is in use by %d", SAMPLE_APP_Data.reply_msgid);
+        // Init reply packet
+        CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), CFE_SB_ValueToMsgId(Payload->reply_msgid),
+                     sizeof(SAMPLE_APP_Data.Reply_Pkt));
+        CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), Payload->reply_cmdid);
+        SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 0;
+        CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), true);
+        return CFE_SUCCESS;
+    }
+
+    CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: Programming partial bitstream %s", Payload->binfile);
+    program_pl(Payload->binfile, 1);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_PARTIAL_PROGRAM_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_RESET                                                  */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Assert reset signal and deassert                                  */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Reset (SAMPLE_APP_Reset_t *Msg)
+{
+
+    SAMPLE_APP_Reset_Payload_t *Payload = &(Msg->Payload);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "PL_CONTROL: PL is in use by %d", SAMPLE_APP_Data.reply_msgid);
+        // Init reply packet
+        CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), CFE_SB_ValueToMsgId(Payload->reply_msgid),
+                     sizeof(SAMPLE_APP_Data.Reply_Pkt));
+        CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), Payload->reply_cmdid);
+        SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 0;
+        CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), true);
+        return CFE_SUCCESS;
+    }
+
+    void *mapping;
+    cpusize newSize = mmio_lib_NewMapping(&mapping, Payload->base_addr, (cpusize)32);
+    int *reset = mapping;
+    reset = reset + Payload->reset_offset;
+    *reset = 0;
+    *reset = 1;
+    OS_TaskDelay(1);
+    *reset = 0;
+    CFE_EVS_SendEvent(SAMPLE_APP_RESET_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: Reset");
+    mmio_lib_DeleteMapping(mapping, newSize);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_RESET_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_INPUT_CC                                               */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Set a value in memory                                             */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Input (SAMPLE_APP_Input_t *Msg)
+{
+
+    SAMPLE_APP_Input_Payload_t *Payload = &(Msg->Payload);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "PL_CONTROL: PL is in use by %d", SAMPLE_APP_Data.reply_msgid);
+        return CFE_SUCCESS;
+    }
+
+    SAMPLE_APP_Data.reply_msgid = Payload->reply_msgid;
+    SAMPLE_APP_Data.reply_cmdid = Payload->reply_cmdid;
+    void *mapping;
+    cpusize newSize = mmio_lib_NewMapping(&mapping, Payload->base_addr, (cpusize)32);
+    int *start = mapping;
+    int *input = mapping;
+    start = start + Payload->start_offset;
+    input = input + Payload->input_offset;
+    *start = 0;
+    *input = Payload->number;
+    *start = 1;
+    CFE_EVS_SendEvent(SAMPLE_APP_INPUT_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: Input %d", Payload->number);
+    mmio_lib_DeleteMapping(mapping, newSize);
+    
+    SAMPLE_APP_Output(NULL);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_INPUT_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_OUTPUT                                                 */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Read a value in memory                                            */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Output (SAMPLE_APP_Output_t *Msg)
+{
+
+    void *mapping;
+    cpusize newSize = mmio_lib_NewMapping(&mapping, SAMPLE_APP_Data.base_addr, (cpusize)32);
+    int *done = mapping;
+    int *output = mapping;
+    done = done + SAMPLE_APP_Data.done_offset;
+    output = output + SAMPLE_APP_Data.output_offset;
+    int count = 0;
+    while (*done == 0) {
+        count = count + 1;
+        if (count > 100) {
+            break;
+        }
+    }
+    
+    CFE_EVS_SendEvent(SAMPLE_APP_OUTPUT_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: output = %d, done = %d", *output, *done);
+    
+    // Init Output packet
+    CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Output_Pkt.CmdHeader), CFE_SB_ValueToMsgId(SAMPLE_APP_Data.reply_msgid),
+                 sizeof(SAMPLE_APP_Data.Output_Pkt));
+    CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Output_Pkt.CmdHeader), SAMPLE_APP_Data.reply_cmdid);
+    SAMPLE_APP_Data.Output_Pkt.Payload.Done = *done;
+    SAMPLE_APP_Data.Output_Pkt.Payload.Output = *output;
+    CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Output_Pkt.CmdHeader), true);
+
+    mmio_lib_DeleteMapping(mapping, newSize);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_OUTPUT_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_Release                                                */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Release PL control                                                */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Release (SAMPLE_APP_Release_t *Msg)
+{
+
+    SAMPLE_APP_Release_Payload_t *Payload = &(Msg->Payload);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_FULL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "PL_CONTROL: PL is in use by %d", SAMPLE_APP_Data.reply_msgid);
+        // Init reply packet
+        CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), CFE_SB_ValueToMsgId(Payload->reply_msgid),
+                     sizeof(SAMPLE_APP_Data.Reply_Pkt));
+        CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), Payload->reply_cmdid);
+        SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 0;
+        CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), true);
+        return CFE_SUCCESS;
+    }
+
+    SAMPLE_APP_Data.reply_msgid = -1;
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_RELEASE_CC */
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* SAMPLE_APP_VerifyCmdLength() -- Verify command packet length                   */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+/*  Name:  SAMPLE_APP_Query              */
+/*                                                                                        */
+/*  Purpose:                                                                        */
+/*         Reply whether you have PL control                                               */
+/*                                                                                        */
+/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+int32 SAMPLE_APP_Query (SAMPLE_APP_Query_t *Msg)
+{
+
+    SAMPLE_APP_Query_Payload_t *Payload = &(Msg->Payload);
+
+    // Init reply packet
+    CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), CFE_SB_ValueToMsgId(Payload->reply_msgid),
+                 sizeof(SAMPLE_APP_Data.Reply_Pkt));
+    CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), Payload->reply_cmdid);
+
+    // Check if PL is in use/correct app
+    if (SAMPLE_APP_Data.reply_msgid != -1
+        && SAMPLE_APP_Data.reply_msgid != Payload->reply_msgid)
+    {
+        SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 0;
+    }
+
+    SAMPLE_APP_Data.Reply_Pkt.Payload.Reply = 1;
+    CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Reply_Pkt.CmdHeader), true);
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_QUERY_CC */
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_Counter_Test                                           */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Test C instruction to PL clock cycles                             */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Counter_Test (SAMPLE_APP_Output_Pkt_t *Msg)
+{
+
+    CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "PL_CONTROL: Programming bitstream count1.bin");
+    char bin[] = "/home/ubuntu/bitstreams/count1.bin";
+    program_pl(bin, 0);
+
+    // Test between instructions
+    void *mapping;
+    cpusize newSize = mmio_lib_NewMapping(&mapping, 0x43C00000, (cpusize)32);
+    int *mapped = mapping;
+    int *start = mapped + 1;
+    int *input = mapped + 2;
+    int *count_out = mapped + 3;
+    int c_o = -1;
+    int nums[20];
+    for (int i = 10; i < 30; i++) {
+        *mapped = 1;
+        *mapped = 0;
+        *input = i;
+        *start = 1;
+        c_o = *count_out;
+        nums[i-10] = c_o;
+        *start = 0;
+    }
+    for (int i = 0; i < 25; i++) {
+        CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+            "Count_Test: i = %d, counter = %d\n", i+10, nums[i]);
+    }
+    mmio_lib_DeleteMapping(mapping, newSize);
+
+    return CFE_SUCCESS;
+
+}
+
+/* End of SAMPLE_APP_COUNTER_TEST_CC*/
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*  Name:  SAMPLE_APP_Make_Busy                                              */
+/*                                                                           */
+/*  Purpose:                                                                 */
+/*         Send messages to itself to make CPU busy                          */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int32 SAMPLE_APP_Make_Busy (SAMPLE_APP_Output_Pkt_t *Msg)
+{
+
+    SAMPLE_APP_Output_Pkt_Payload_t *Payload = &(Msg->Payload);
+
+    CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "Busy count: %d\n", Payload->Output);
+
+    // Busy type 1 (arithmetic)
+    for (int i = 0; i < Payload->Output; i++) {
+        int x = 0;
+        while (x < 1000) {
+            x++;
+        }
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "Busy Done\n");
+
+    /*
+    // Busy type 2 (Software Bus messages)
+    if (Payload->Output > 0) {
+        CFE_MSG_Init(CFE_MSG_PTR(SAMPLE_APP_Data.Busy_Pkt.CmdHeader), CFE_SB_ValueToMsgId(SAMPLE_APP_CMD_MID),
+                     sizeof(SAMPLE_APP_Data.Busy_Pkt));
+        CFE_MSG_SetFcnCode(CFE_MSG_PTR(SAMPLE_APP_Data.Busy_Pkt.CmdHeader), PL_CONTROL_APP_MAKE_BUSY_CC);
+        SAMPLE_APP_Data.Busy_Pkt.Payload.Done = Payload->Done;
+        SAMPLE_APP_Data.Busy_Pkt.Payload.Output = Payload->Output - 1;
+        CFE_SB_TransmitMsg(CFE_MSG_PTR(SAMPLE_APP_Data.Busy_Pkt.CmdHeader), true);
+    } else {
+        CFE_EVS_SendEvent(SAMPLE_APP_PARTIAL_PROGRAM_INF_EID, CFE_EVS_EventType_INFORMATION,
+        "Busy Done: %d\n", Payload->Output);
+    }
+    */
+
+    return CFE_SUCCESS;
+
+} /* End of SAMPLE_APP_MAKE_BUSY_CC*/
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                           */
+/* SAMPLE_APP_VerifyCmdLength() -- Verify command packet length              */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool SAMPLE_APP_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t ExpectedLength)
 {
     bool              result       = true;
@@ -421,7 +871,7 @@ bool SAMPLE_APP_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t ExpectedLength
         CFE_MSG_GetFcnCode(MsgPtr, &FcnCode);
 
         CFE_EVS_SendEvent(SAMPLE_APP_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "Invalid Msg length: ID = 0x%X,  CC = %u, Len = %u, Expected = %u",
+                          "PL_CONTROL: Invalid Msg length: ID = 0x%X,  CC = %u, Len = %u, Expected = %u",
                           (unsigned int)CFE_SB_MsgIdToValue(MsgId), (unsigned int)FcnCode, (unsigned int)ActualLength,
                           (unsigned int)ExpectedLength);
 
@@ -430,13 +880,17 @@ bool SAMPLE_APP_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t ExpectedLength
         SAMPLE_APP_Data.ErrCounter++;
     }
 
+    if (ActualLength > ExpectedLength) {
+        result = true;
+    }
+
     return (result);
 
 } /* End of SAMPLE_APP_VerifyCmdLength() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
-/* SAMPLE_APP_TblValidationFunc -- Verify contents of First Table      */
+/* SAMPLE_APP_TblValidationFunc -- Verify contents of First Table  */
 /* buffer contents                                                 */
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -460,7 +914,7 @@ int32 SAMPLE_APP_TblValidationFunc(void *TblData)
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
-/* SAMPLE_APP_GetCrc -- Output CRC                                     */
+/* SAMPLE_APP_GetCrc -- Output CRC                                 */
 /*                                                                 */
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -473,12 +927,12 @@ void SAMPLE_APP_GetCrc(const char *TableName)
     status = CFE_TBL_GetInfo(&TblInfoPtr, TableName);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Getting Table Info");
+        CFE_ES_WriteToSysLog("PL_Control App: Error Getting Table Info");
     }
     else
     {
         Crc = TblInfoPtr.Crc;
-        CFE_ES_WriteToSysLog("Sample App: CRC: 0x%08lX\n\n", (unsigned long)Crc);
+        CFE_ES_WriteToSysLog("PL_Control App: CRC: 0x%08lX\n\n", (unsigned long)Crc);
     }
 
     return;

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtime_headercheck.a CMakeFiles/time_headercheck.dir/src/check_cfe_time_events.h.c.o CMakeFiles/time_headercheck.dir/src/check_cfe_time_msg.h.c.o
+/usr/bin/ranlib libtime_headercheck.a
