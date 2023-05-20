@@ -6,7 +6,7 @@ fpgam_lib allows any cFS application to program programmable logic on a hybrid S
 Note fpgam_lib uses Linux's FPGA Manager, so it only works when used with an operating system that uses the Linux Kernel.
 
 # Usage
-I will assume you have complete CFS-101 (available here: https://github.com/nasa/CFS-101) which goes through how to develop cFS apps, run cFS and use the Ground System for an older version of cFS.
+I will assume you have completed CFS-101 (available here: https://github.com/nasa/CFS-101) which goes through how to develop cFS apps, run cFS and use the Ground System for an older version of cFS.
 
 ## Replicate the work by duplicating the repo and SD card
 There needs to be two copies of the repo: one will be on a computer to be the "Ground System" and the other will be on the SD card in the ZedBoard.
