@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsb_headercheck.a CMakeFiles/sb_headercheck.dir/src/check_cfe_sb_msg.h.c.o CMakeFiles/sb_headercheck.dir/src/check_cfe_sb_events.h.c.o
+/usr/bin/ranlib libsb_headercheck.a

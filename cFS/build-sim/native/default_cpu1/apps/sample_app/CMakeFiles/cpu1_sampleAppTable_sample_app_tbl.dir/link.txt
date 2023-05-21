@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcpu1_sampleAppTable_sample_app_tbl.a CMakeFiles/cpu1_sampleAppTable_sample_app_tbl.dir/fsw/tables/sample_app_tbl.c.o
+/usr/bin/ranlib libcpu1_sampleAppTable_sample_app_tbl.a

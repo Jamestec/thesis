@@ -1,0 +1,55 @@
+#---------------------------------------------------------------------------
+# Sample doxygen setup for generating mission documentation
+#---------------------------------------------------------------------------
+
+# Allow overrides
+@INCLUDE_PATH          = /home/jam/Downloads/cFS
+
+# Common configuration and default settings
+@INCLUDE               = /home/jam/Downloads/cFS/build-sim/docs/cfe-common.doxyfile
+
+# Example mission doc design setup
+PROJECT_NAME           = "SampleMission"
+PROJECT_BRIEF          = "Core Flight System project built using \"sample\" configuration"
+OUTPUT_DIRECTORY       = /home/jam/Downloads/cFS/build-sim/docs/mission-doc
+WARN_LOGFILE           = mission-doc-warnings.log
+
+# Include mission defs directory
+INPUT                 += /home/jam/Downloads/cFS/sample_defs
+STRIP_FROM_PATH       += /home/jam/Downloads/cFS/sample_defs
+
+# The user content doxyfile contains paths to the mission-specific applications
+INPUT += /home/jam/Downloads/cFS/cfe/modules/core_api
+INPUT += /home/jam/Downloads/cFS/cfe/modules/core_private
+INPUT += /home/jam/Downloads/cFS/apps/ci_lab
+INPUT += /home/jam/Downloads/cFS/apps/to_lab
+INPUT += /home/jam/Downloads/cFS/apps/sch_lab
+INPUT += /home/jam/Downloads/cFS/cfe/modules/cfe_assert
+INPUT += /home/jam/Downloads/cFS/apps/sample_app
+INPUT += /home/jam/Downloads/cFS/libs/sample_lib
+INPUT += /home/jam/Downloads/cFS/cfe/modules/es
+INPUT += /home/jam/Downloads/cFS/cfe/modules/evs
+INPUT += /home/jam/Downloads/cFS/cfe/modules/fs
+INPUT += /home/jam/Downloads/cFS/cfe/modules/sb
+INPUT += /home/jam/Downloads/cFS/cfe/modules/tbl
+INPUT += /home/jam/Downloads/cFS/cfe/modules/time
+@INCLUDE = /home/jam/Downloads/cFS/build-sim/docs/osal-detaildesign.doxyfile
+INPUT += /home/jam/Downloads/cFS/psp
+INPUT += /home/jam/Downloads/cFS/cfe/modules/msg
+INPUT += /home/jam/Downloads/cFS/cfe/modules/sbr
+INPUT += /home/jam/Downloads/cFS/cfe/modules/resourceid
+INPUT += /home/jam/Downloads/cFS/cfe/modules/config
+
+@INCLUDE = /home/jam/Downloads/cFS/build-sim/docs/tgtsystem-content-native_default_cpu1.doxyfile
+
+
+# Exclude coverage tests, stubs and associated framework from the documentation
+EXCLUDE_PATTERNS       += "*/ut-stubs/*"
+EXCLUDE_PATTERNS       += "*/ut-coverage/*"
+EXCLUDE_PATTERNS       += "*/unit-test*/*"
+
+# Exclude stand alone repo documentation
+EXCLUDE_PATTERNS       += "*/CODE_OF_CONDUCT.md"
+EXCLUDE_PATTERNS       += "*/CONTRIBUTING.md"
+EXCLUDE_PATTERNS       += "*/README.md"
+EXCLUDE_PATTERNS       += "*/SECURITY.md"

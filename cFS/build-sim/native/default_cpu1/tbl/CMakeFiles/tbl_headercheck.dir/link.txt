@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtbl_headercheck.a CMakeFiles/tbl_headercheck.dir/src/check_cfe_tbl_msg.h.c.o CMakeFiles/tbl_headercheck.dir/src/check_cfe_tbl_events.h.c.o
+/usr/bin/ranlib libtbl_headercheck.a

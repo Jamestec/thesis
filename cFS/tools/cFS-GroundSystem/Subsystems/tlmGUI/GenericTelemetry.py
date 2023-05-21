@@ -56,7 +56,7 @@ class SubsystemTelemetry(QDialog, UiGenerictelemetrydialog):
             except ValueError:
                 pass
 
-            tlm_field1 = tlm_item_format[tlm_index]
+            tlm_field1 = tlmItemFormat[tlm_index]
             if tlm_field1[0] == "<":
                 tlm_field1 = tlm_field1[1:]
         
@@ -74,7 +74,7 @@ class SubsystemTelemetry(QDialog, UiGenerictelemetrydialog):
                 elif tlm_item_display_type[tlm_index] == 'Hex':
                     value_field.setText(hex(tlm_field[0]))
                 elif tlm_item_display_type[tlm_index] == 'Enm':
-                    value_field.setText(tlmItemEnum[tlm_index][int(tlm_field[0])])
+                    value_field.setText(tlm_item_enum[tlm_index][int(tlm_field[0])])
                 elif tlm_item_display_type[tlm_index] == 'Str':
                     value_field.setText(tlm_field[0].decode('utf-8', 'ignore'))
                 label_field.setText(tlmItemDesc[tlm_index])
@@ -85,7 +85,7 @@ class SubsystemTelemetry(QDialog, UiGenerictelemetrydialog):
     def init_gt_tlm_receiver(self, subscr):
         self.setWindowTitle(f"{page_title} for: {subscr}")
         self.thread = GTTlmReceiver(subscr)
-        self.thread.gtSignalTlmDatagram.connect(self.process_pending_datagrams)
+        self.thread.gt_signal_tlm_datagram.connect(self.process_pending_datagrams)
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
 
@@ -227,13 +227,13 @@ if __name__ == '__main__':
         for row in reader:
             if not row[0].startswith("#"):
                 tlm_item_is_valid.append(True)
-                tlm_item_desc.append(row[0])
+                tlmItemDesc.append(row[0])
                 tlm_item_start.append(row[1])
-                tlm_item_size.append(row[2])
+                tlmItemSize.append(row[2])
                 if row[3].lower() == 's':
-                    tlm_item_format.append(f'{row[2]}{row[3]}')
+                    tlmItemFormat.append(f'{row[2]}{row[3]}')
                 else:
-                    tlm_item_format.append(f'{py_endian}{row[3]}')
+                    tlmItemFormat.append(f'{py_endian}{row[3]}')
                 tlm_item_display_type.append(row[4])
                 if row[4] == 'Enm':
                     tlm_item_enum[i] = row[5:9]

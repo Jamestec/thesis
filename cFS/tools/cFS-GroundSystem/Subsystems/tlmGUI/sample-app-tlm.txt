@@ -1,0 +1,11 @@
+#
+CommandErrorCounter,        12,  1,  B, Dec, NULL,        NULL,        NULL,       NULL
+CommandCounter,    13,  1,  B, Dec, NULL,        NULL,        NULL,       NULL  
+binfile,      14,  128,  s, Str, NULL,        NULL,        NULL,       NULL  
+base_addr,    144,  4,  I, Hex, NULL,        NULL,        NULL,       NULL
+input_offset,    148,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
+start_offset,    152,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
+done_offset,    156,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
+output_offset,    160,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
+reply_msgid,    164,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
+reply_cmdid,    168,  4,  I, Dec, NULL,        NULL,        NULL,       NULL
